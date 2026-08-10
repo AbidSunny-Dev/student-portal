@@ -1,9 +1,12 @@
-import { Menu, Bell } from 'lucide-react';
+import { Menu, Bell, User } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 
 export const Navbar = ({ onMenuToggle }) => {
   const { currentUser, notices } = useAuth();
+  const navigate = useNavigate();
   const unread = notices?.filter(n => n.isNew).length || 0;
+  const profileUrl = currentUser?.role === 'admin' ? '/admin/profile' : '/profile';
 
   const now = new Date();
   const dateStr = now.toLocaleDateString('en-BD', {
@@ -39,10 +42,14 @@ export const Navbar = ({ onMenuToggle }) => {
           )}
         </div>
 
-        {/* User avatar */}
-        <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center text-sm font-bold text-white shadow-lg shadow-primary-500/20">
+        {/* User avatar button */}
+        <button
+          onClick={() => navigate(profileUrl)}
+          className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center text-sm font-bold text-white shadow-lg shadow-primary-500/20 hover:scale-105 active:scale-95 transition-all cursor-pointer"
+          title="Go to My Profile"
+        >
           {currentUser?.name?.charAt(0) || 'U'}
-        </div>
+        </button>
       </div>
     </header>
   );

@@ -82,6 +82,51 @@ export const AuthProvider = ({ children }) => {
 
   const logout = () => setCurrentUser(null);
 
+  // ---- PROFILE & ACCOUNT ----
+  const updateUserProfile = (data) => {
+    if (!currentUser) return { success: false, error: 'No user logged in' };
+    const updated = { ...currentUser, ...data };
+    setCurrentUser(updated);
+
+    if (currentUser.role === 'student') {
+      setStudents(prev => prev.map(s => s.id === currentUser.id ? { ...s, ...data } : s));
+    }
+    return { success: true };
+  };
+
+  const changePassword = (currentPassword, newPassword) => {
+    if (!currentUser) return { success: false, error: 'No user logged in' };
+    if (currentUser.password !== currentPassword) {
+      return { success: false, error: 'Current password is incorrect.' };
+    }
+    const updated = { ...currentUser, password: newPassword };
+    setCurrentUser(updated);
+
+    if (currentUser.role === 'student') {
+      setStudents(prev => prev.map(s => s.id === currentUser.id ? { ...s, password: newPassword } : s));
+    }
+    return { success: true };
+  };
+
+  const resetPasswordWithOTP = (email, newPassword) => {
+    if (email === ADMIN_CREDENTIALS.email) {
+      ADMIN_CREDENTIALS.password = newPassword;
+      if (currentUser?.role === 'admin') {
+        setCurrentUser({ ...currentUser, password: newPassword });
+      }
+      return { success: true, message: 'Admin password reset successfully.' };
+    }
+    const student = students.find(s => s.email.toLowerCase() === email.toLowerCase());
+    if (!student) {
+      return { success: false, error: 'No account registered with this email.' };
+    }
+    setStudents(prev => prev.map(s => s.email.toLowerCase() === email.toLowerCase() ? { ...s, password: newPassword } : s));
+    if (currentUser?.email?.toLowerCase() === email.toLowerCase()) {
+      setCurrentUser(prev => ({ ...prev, password: newPassword }));
+    }
+    return { success: true, message: 'Password reset successfully!' };
+  };
+
   // ---- NOTICES ----
   const addNotice = (notice) => {
     const n = { ...notice, id: `NOT${Date.now()}`, postedAt: new Date().toISOString(), postedBy: 'Admin', isNew: true };
@@ -108,6 +153,7 @@ export const AuthProvider = ({ children }) => {
     const m = { ...material, id: `MAT${Date.now()}`, uploadedAt: new Date().toISOString(), uploadedBy: 'Admin' };
     setMaterials(prev => [m, ...prev]);
   };
+  const updateMaterial = (id, data) => setMaterials(prev => prev.map(m => m.id === id ? { ...m, ...data } : m));
   const deleteMaterial = (id) => setMaterials(prev => prev.filter(m => m.id !== id));
 
   // ---- QUESTIONS ----
@@ -115,6 +161,7 @@ export const AuthProvider = ({ children }) => {
     const q = { ...question, id: `QSN${Date.now()}`, uploadedAt: new Date().toISOString(), uploadedBy: 'Admin' };
     setQuestions(prev => [q, ...prev]);
   };
+  const updateQuestion = (id, data) => setQuestions(prev => prev.map(q => q.id === id ? { ...q, ...data } : q));
   const deleteQuestion = (id) => setQuestions(prev => prev.filter(q => q.id !== id));
 
   // ---- RESULTS ----
@@ -139,6 +186,17 @@ export const AuthProvider = ({ children }) => {
       };
     }));
   };
+  const deleteSemesterResult = (semesterId) => {
+    setResults(prev => prev.filter(r => r.semesterId !== semesterId));
+  };
+  const deleteStudentResult = (semesterId, studentId) => {
+    setResults(prev => prev.map(sem => {
+      if (sem.semesterId !== semesterId) return sem;
+      const updatedStudentResults = { ...sem.studentResults };
+      delete updatedStudentResults[studentId];
+      return { ...sem, studentResults: updatedStudentResults };
+    }));
+  };
 
   // ---- FACULTY ----
   const addFaculty = (f) => {
@@ -149,26 +207,37 @@ export const AuthProvider = ({ children }) => {
   const deleteFaculty = (id) => setFaculty(prev => prev.filter(f => f.id !== id));
 
   // ---- STUDENTS ----
+  const addStudent = (data) => {
+    const newStudent = {
+      ...data,
+      id: `STU${String(students.length + 1).padStart(3, '0')}`,
+      role: 'student',
+      registeredAt: new Date().toISOString(),
+    };
+    setStudents(prev => [...prev, newStudent]);
+    return { success: true };
+  };
   const updateStudent = (id, data) => setStudents(prev => prev.map(s => s.id === id ? { ...s, ...data } : s));
   const deleteStudent = (id) => setStudents(prev => prev.filter(s => s.id !== id));
 
   // ---- SUBJECTS ----
   const addSubject = (sub) => setSubjects(prev => [...prev, sub]);
+  const updateSubject = (code, data) => setSubjects(prev => prev.map(s => s.code === code ? { ...s, ...data } : s));
   const deleteSubject = (code) => setSubjects(prev => prev.filter(s => s.code !== code));
 
   // ---- ROUTINE ----
   const updateRoutine = (day, slots) => setRoutine(prev => ({ ...prev, [day]: slots }));
 
   const value = {
-    currentUser, login, logout, register,
-    students, updateStudent, deleteStudent,
+    currentUser, login, logout, register, updateUserProfile, changePassword, resetPasswordWithOTP,
+    students, addStudent, updateStudent, deleteStudent,
     notices, addNotice, updateNotice, deleteNotice,
     assignments, addAssignment, updateAssignment, deleteAssignment, markSubmitted,
-    materials, addMaterial, deleteMaterial,
-    questions, addQuestion, deleteQuestion,
-    results, addSemesterResult, updateStudentResult,
+    materials, addMaterial, updateMaterial, deleteMaterial,
+    questions, addQuestion, updateQuestion, deleteQuestion,
+    results, addSemesterResult, updateStudentResult, deleteSemesterResult, deleteStudentResult,
     faculty, addFaculty, updateFaculty, deleteFaculty,
-    subjects, addSubject, deleteSubject,
+    subjects, addSubject, updateSubject, deleteSubject,
     routine, updateRoutine,
   };
 

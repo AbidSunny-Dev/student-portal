@@ -5,11 +5,12 @@ import {
   LayoutDashboard, Bell, ClipboardList, Calendar, Users,
   BookOpen, BarChart2, Calculator, FileQuestion, LogOut,
   GraduationCap, Menu, X, Shield, BookMarked, Newspaper,
-  UserCog, Settings,
+  UserCog, Settings, User,
 } from 'lucide-react';
 
 const studentNavItems = [
   { to: '/dashboard',    icon: LayoutDashboard,  label: 'Dashboard' },
+  { to: '/profile',      icon: User,             label: 'My Profile' },
   { to: '/notices',      icon: Bell,              label: 'Notice Board' },
   { to: '/assignments',  icon: ClipboardList,     label: 'Assignments' },
   { to: '/routine',      icon: Calendar,          label: 'Class Routine' },
@@ -22,6 +23,7 @@ const studentNavItems = [
 
 const adminNavItems = [
   { to: '/admin',              icon: LayoutDashboard, label: 'Dashboard' },
+  { to: '/admin/profile',      icon: User,            label: 'My Profile' },
   { to: '/admin/notices',      icon: Newspaper,       label: 'Notices' },
   { to: '/admin/assignments',  icon: ClipboardList,   label: 'Assignments' },
   { to: '/admin/faculty',      icon: Users,           label: 'Faculty' },
@@ -37,6 +39,7 @@ export const Sidebar = ({ collapsed, setCollapsed }) => {
   const navigate = useNavigate();
   const isAdmin = currentUser?.role === 'admin';
   const navItems = isAdmin ? adminNavItems : studentNavItems;
+  const profileUrl = isAdmin ? '/admin/profile' : '/profile';
 
   const handleLogout = () => {
     logout();
@@ -110,12 +113,16 @@ export const Sidebar = ({ collapsed, setCollapsed }) => {
         {/* User info + logout */}
         <div className="border-t border-white/5 p-3">
           {!collapsed && (
-            <div className="flex items-center gap-3 px-3 py-2 mb-2 animate-fade-in">
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center text-sm font-bold text-white flex-shrink-0">
+            <div
+              onClick={() => navigate(profileUrl)}
+              className="flex items-center gap-3 px-3 py-2 mb-2 animate-fade-in hover:bg-white/5 rounded-xl cursor-pointer transition-colors group"
+              title="View Profile"
+            >
+              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center text-sm font-bold text-white flex-shrink-0 group-hover:scale-105 transition-transform">
                 {currentUser?.name?.charAt(0) || 'U'}
               </div>
-              <div className="min-w-0">
-                <p className="text-sm font-medium text-white truncate">{currentUser?.name}</p>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-medium text-white truncate group-hover:text-primary-300 transition-colors">{currentUser?.name}</p>
                 <p className="text-xs text-white/40 truncate">{currentUser?.email}</p>
               </div>
             </div>

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { BarChart2, PlusCircle, Save, X, ChevronDown, ChevronUp } from 'lucide-react';
+import { BarChart2, Save, ChevronDown, ChevronUp, Trash2 } from 'lucide-react';
 import { calculateGPA, GRADE_SCALE } from '../../data/mockData';
 
 const SUBJECTS_BY_SEM = {
@@ -25,10 +25,11 @@ const SUBJECTS_BY_SEM = {
 
 const SEMESTERS = [
   { id: 'SEM_3_1', name: 'Semester 3.1', year: '2025', subjects: SUBJECTS_BY_SEM['3.1'] },
+  { id: 'SEM_1_1', name: 'Semester 1.1', year: '2024', subjects: SUBJECTS_BY_SEM['1.1'] },
 ];
 
 export const ManageResults = () => {
-  const { results, students, updateStudentResult, addSemesterResult } = useAuth();
+  const { results, students, updateStudentResult, addSemesterResult, deleteSemesterResult, deleteStudentResult } = useAuth();
   const [selectedSem, setSelectedSem] = useState('SEM_3_1');
   const [selectedStudent, setSelectedStudent] = useState(students[0]?.id || '');
   const [grades, setGrades] = useState({});
@@ -86,7 +87,7 @@ export const ManageResults = () => {
         </div>
         <div>
           <h1 className="section-title">Manage Results</h1>
-          <p className="section-subtitle">Enter and update student grades per semester</p>
+          <p className="section-subtitle">Enter, update, and manage student grades per semester</p>
         </div>
       </div>
 
@@ -163,33 +164,57 @@ export const ManageResults = () => {
         <div className="space-y-3">
           {results.map(sem => (
             <div key={sem.semesterId} className="border border-white/5 rounded-xl overflow-hidden">
-              <button
-                onClick={() => setExpandedSem(expandedSem === sem.semesterId ? null : sem.semesterId)}
-                className="w-full flex items-center justify-between p-4 hover:bg-white/3 transition-colors"
-              >
-                <div className="flex items-center gap-3">
+              <div className="flex items-center justify-between p-4 bg-surface-800/40">
+                <button
+                  onClick={() => setExpandedSem(expandedSem === sem.semesterId ? null : sem.semesterId)}
+                  className="flex items-center gap-3 hover:text-white transition-colors"
+                >
                   <span className="font-medium text-white">{sem.semesterName}</span>
                   <span className="text-xs text-white/30">{sem.year}</span>
                   <span className="badge-blue">{Object.keys(sem.studentResults || {}).length} students</span>
-                </div>
-                {expandedSem === sem.semesterId ? <ChevronUp size={16} className="text-white/40" /> : <ChevronDown size={16} className="text-white/40" />}
-              </button>
+                  {expandedSem === sem.semesterId ? <ChevronUp size={16} className="text-white/40" /> : <ChevronDown size={16} className="text-white/40" />}
+                </button>
+
+                <button
+                  onClick={() => deleteSemesterResult(sem.semesterId)}
+                  className="text-xs text-red-400/70 hover:text-red-400 flex items-center gap-1 p-1 transition-colors"
+                  title="Delete Semester Result Batch"
+                >
+                  <Trash2 size={13} /> Delete Semester
+                </button>
+              </div>
+
               {expandedSem === sem.semesterId && (
-                <div className="border-t border-white/5 p-4 animate-fade-in">
+                <div className="border-t border-white/5 p-4 animate-fade-in space-y-2">
                   {Object.entries(sem.studentResults || {}).map(([stuId, res]) => {
                     const stu = students.find(s => s.id === stuId);
                     const gpa = calculateGPA(res);
                     return (
                       <div key={stuId} className="flex items-center justify-between py-2 border-b border-white/5 last:border-0">
                         <span className="text-sm text-white/70">{stu?.name || stuId}</span>
-                        <span className="font-mono font-bold text-primary-400">{gpa.toFixed(2)} GPA</span>
+                        <div className="flex items-center gap-3">
+                          <span className="font-mono font-bold text-primary-400">{gpa.toFixed(2)} GPA</span>
+                          <button
+                            onClick={() => deleteStudentResult(sem.semesterId, stuId)}
+                            className="text-red-400/60 hover:text-red-400 p-1"
+                            title="Remove Student Result"
+                          >
+                            <Trash2 size={13} />
+                          </button>
+                        </div>
                       </div>
                     );
                   })}
+                  {Object.keys(sem.studentResults || {}).length === 0 && (
+                    <p className="text-xs text-white/30 text-center py-2">No student result entries in this semester.</p>
+                  )}
                 </div>
               )}
             </div>
           ))}
+          {results.length === 0 && (
+            <p className="text-center text-white/30 py-6 text-sm">No semester results recorded yet.</p>
+          )}
         </div>
       </div>
     </div>

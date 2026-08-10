@@ -30,6 +30,9 @@ import { ManageQuestions } from './pages/admin/ManageQuestions';
 import { ManageStudents } from './pages/admin/ManageStudents';
 import { ManageRoutine } from './pages/admin/ManageRoutine';
 
+// Shared Pages
+import { ProfilePage } from './pages/ProfilePage';
+
 function App() {
   return (
     <AuthProvider>
@@ -59,6 +62,7 @@ function App() {
             <Route path="results" element={<ResultsPage />} />
             <Route path="cgpa" element={<CGPACalculatorPage />} />
             <Route path="question-bank" element={<QuestionBankPage />} />
+            <Route path="profile" element={<ProfilePage />} />
           </Route>
 
           {/* Admin Protected Routes */}
@@ -79,6 +83,7 @@ function App() {
             <Route path="questions" element={<ManageQuestions />} />
             <Route path="students" element={<ManageStudents />} />
             <Route path="routine" element={<ManageRoutine />} />
+            <Route path="profile" element={<ProfilePage />} />
           </Route>
 
           {/* Fallback route */}
