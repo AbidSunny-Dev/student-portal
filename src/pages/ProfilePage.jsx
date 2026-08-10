@@ -25,14 +25,14 @@ export const ProfilePage = () => {
   });
   const [pwdMsg, setPwdMsg] = useState(null);
 
-  const handleProfileSubmit = (e) => {
+  const handleProfileSubmit = async (e) => {
     e.preventDefault();
     setProfileMsg(null);
     if (!profileForm.name.trim()) {
       setProfileMsg({ type: 'error', text: 'Name cannot be empty.' });
       return;
     }
-    const res = updateUserProfile({
+    const res = await updateUserProfile({
       name: profileForm.name,
       phone: profileForm.phone,
     });
@@ -43,7 +43,7 @@ export const ProfilePage = () => {
     }
   };
 
-  const handlePasswordSubmit = (e) => {
+  const handlePasswordSubmit = async (e) => {
     e.preventDefault();
     setPwdMsg(null);
     if (!pwdForm.currentPassword) {
@@ -59,7 +59,7 @@ export const ProfilePage = () => {
       return;
     }
 
-    const res = changePassword(pwdForm.currentPassword, pwdForm.newPassword);
+    const res = await changePassword(pwdForm.currentPassword, pwdForm.newPassword);
     if (res.success) {
       setPwdMsg({ type: 'success', text: 'Password changed successfully!' });
       setPwdForm({ currentPassword: '', newPassword: '', confirmPassword: '' });

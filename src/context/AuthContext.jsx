@@ -1,16 +1,5 @@
 import { createContext, useContext, useState, useEffect } from 'react';
-import {
-  ADMIN_CREDENTIALS,
-  INITIAL_STUDENTS,
-  INITIAL_NOTICES,
-  INITIAL_ASSIGNMENTS,
-  INITIAL_MATERIALS,
-  INITIAL_QUESTIONS,
-  INITIAL_RESULTS,
-  INITIAL_FACULTY,
-  CURRENT_SUBJECTS,
-  CLASS_ROUTINE,
-} from '../data/mockData';
+import { api } from '../services/api';
 
 const AuthContext = createContext(null);
 
@@ -26,210 +15,424 @@ const LS = {
   },
 };
 
+const DEFAULT_ROUTINE = { Sunday: [], Monday: [], Tuesday: [], Wednesday: [], Thursday: [] };
+
 export const AuthProvider = ({ children }) => {
   const [currentUser, setCurrentUser] = useState(() => LS.get('mu_current_user', null));
-  const [students, setStudents]       = useState(() => LS.get('mu_students', INITIAL_STUDENTS));
-  const [notices, setNotices]         = useState(() => LS.get('mu_notices', INITIAL_NOTICES));
-  const [assignments, setAssignments] = useState(() => LS.get('mu_assignments', INITIAL_ASSIGNMENTS));
-  const [materials, setMaterials]     = useState(() => LS.get('mu_materials', INITIAL_MATERIALS));
-  const [questions, setQuestions]     = useState(() => LS.get('mu_questions', INITIAL_QUESTIONS));
-  const [results, setResults]         = useState(() => LS.get('mu_results', INITIAL_RESULTS));
-  const [faculty, setFaculty]         = useState(() => LS.get('mu_faculty', INITIAL_FACULTY));
-  const [subjects, setSubjects]       = useState(() => LS.get('mu_subjects', CURRENT_SUBJECTS));
-  const [routine, setRoutine]         = useState(() => LS.get('mu_routine', CLASS_ROUTINE));
+  const [students, setStudents]       = useState([]);
+  const [notices, setNotices]         = useState([]);
+  const [assignments, setAssignments] = useState([]);
+  const [materials, setMaterials]     = useState([]);
+  const [questions, setQuestions]     = useState([]);
+  const [results, setResults]         = useState([]);
+  const [faculty, setFaculty]         = useState([]);
+  const [subjects, setSubjects]       = useState([]);
+  const [routine, setRoutine]         = useState(DEFAULT_ROUTINE);
+  const [loading, setLoading]         = useState(true);
 
-  // Persist all state to localStorage
-  useEffect(() => { LS.set('mu_current_user', currentUser); }, [currentUser]);
-  useEffect(() => { LS.set('mu_students', students); }, [students]);
-  useEffect(() => { LS.set('mu_notices', notices); }, [notices]);
-  useEffect(() => { LS.set('mu_assignments', assignments); }, [assignments]);
-  useEffect(() => { LS.set('mu_materials', materials); }, [materials]);
-  useEffect(() => { LS.set('mu_questions', questions); }, [questions]);
-  useEffect(() => { LS.set('mu_results', results); }, [results]);
-  useEffect(() => { LS.set('mu_faculty', faculty); }, [faculty]);
-  useEffect(() => { LS.set('mu_subjects', subjects); }, [subjects]);
-  useEffect(() => { LS.set('mu_routine', routine); }, [routine]);
+  // Sync currentUser session status
+  useEffect(() => {
+    LS.set('mu_current_user', currentUser);
+  }, [currentUser]);
+
+  // Load all initial academic data from local MySQL backend on mount
+  useEffect(() => {
+    const loadAcademicData = async () => {
+      try {
+        setLoading(true);
+        const [
+          stuList,
+          notList,
+          asnList,
+          matList,
+          qsnList,
+          resList,
+          facList,
+          subList,
+          rotList
+        ] = await Promise.all([
+          api.students.getAll().catch(e => { console.error(e); return []; }),
+          api.notices.getAll().catch(e => { console.error(e); return []; }),
+          api.assignments.getAll().catch(e => { console.error(e); return []; }),
+          api.materials.getAll().catch(e => { console.error(e); return []; }),
+          api.questions.getAll().catch(e => { console.error(e); return []; }),
+          api.results.getAll().catch(e => { console.error(e); return []; }),
+          api.faculty.getAll().catch(e => { console.error(e); return []; }),
+          api.subjects.getAll().catch(e => { console.error(e); return []; }),
+          api.routine.getAll().catch(e => { console.error(e); return DEFAULT_ROUTINE; })
+        ]);
+
+        setStudents(stuList);
+        setNotices(notList);
+        setAssignments(asnList);
+        setMaterials(matList);
+        setQuestions(qsnList);
+        setResults(resList);
+        setFaculty(facList);
+        setSubjects(subList);
+        setRoutine(rotList);
+      } catch (error) {
+        console.error('Error loading academic data from backend:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadAcademicData();
+  }, []);
 
   // ---- AUTH ----
-  const login = (email, password) => {
-    if (email === ADMIN_CREDENTIALS.email && password === ADMIN_CREDENTIALS.password) {
-      setCurrentUser(ADMIN_CREDENTIALS);
-      return { success: true, role: 'admin' };
+  const login = async (email, password) => {
+    try {
+      const res = await api.auth.login(email, password);
+      if (res.success) {
+        setCurrentUser(res.user);
+        return { success: true, role: res.role };
+      }
+      return { success: false, error: res.message || 'Invalid email or password.' };
+    } catch (error) {
+      console.error('Login request failed:', error);
+      return { success: false, error: error.message || 'Connection to backend failed.' };
     }
-    const student = students.find(s => s.email === email && s.password === password);
-    if (student) {
-      setCurrentUser(student);
-      return { success: true, role: 'student' };
-    }
-    return { success: false, error: 'Invalid email or password.' };
   };
 
-  const register = (data) => {
-    const exists = students.find(s => s.email === data.email || s.studentId === data.studentId);
-    if (exists) return { success: false, error: 'Email or Student ID already registered.' };
-    const newStudent = {
-      ...data,
-      id: `STU${String(students.length + 1).padStart(3, '0')}`,
-      role: 'student',
-      registeredAt: new Date().toISOString(),
-      batch: 61,
-      section: 'F',
-      dept: 'CSE',
-    };
-    setStudents(prev => [...prev, newStudent]);
-    return { success: true };
+  const register = async (data) => {
+    try {
+      const res = await api.auth.register(data);
+      if (res.success) {
+        // Fetch students again to update local list
+        const updatedStudents = await api.students.getAll();
+        setStudents(updatedStudents);
+        return { success: true };
+      }
+      return { success: false, error: res.error || 'Registration failed.' };
+    } catch (error) {
+      console.error('Registration failed:', error);
+      return { success: false, error: error.message || 'Connection to backend failed.' };
+    }
   };
 
   const logout = () => setCurrentUser(null);
 
   // ---- PROFILE & ACCOUNT ----
-  const updateUserProfile = (data) => {
+  const updateUserProfile = async (data) => {
     if (!currentUser) return { success: false, error: 'No user logged in' };
-    const updated = { ...currentUser, ...data };
-    setCurrentUser(updated);
-
-    if (currentUser.role === 'student') {
-      setStudents(prev => prev.map(s => s.id === currentUser.id ? { ...s, ...data } : s));
-    }
-    return { success: true };
-  };
-
-  const changePassword = (currentPassword, newPassword) => {
-    if (!currentUser) return { success: false, error: 'No user logged in' };
-    if (currentUser.password !== currentPassword) {
-      return { success: false, error: 'Current password is incorrect.' };
-    }
-    const updated = { ...currentUser, password: newPassword };
-    setCurrentUser(updated);
-
-    if (currentUser.role === 'student') {
-      setStudents(prev => prev.map(s => s.id === currentUser.id ? { ...s, password: newPassword } : s));
-    }
-    return { success: true };
-  };
-
-  const resetPasswordWithOTP = (email, newPassword) => {
-    if (email === ADMIN_CREDENTIALS.email) {
-      ADMIN_CREDENTIALS.password = newPassword;
-      if (currentUser?.role === 'admin') {
-        setCurrentUser({ ...currentUser, password: newPassword });
+    try {
+      const payload = { ...currentUser, ...data };
+      const res = await api.auth.updateProfile(payload);
+      if (res.success) {
+        setCurrentUser(payload);
+        if (currentUser.role === 'student') {
+          setStudents(prev => prev.map(s => s.id === currentUser.id ? { ...s, ...data } : s));
+        }
+        return { success: true };
       }
-      return { success: true, message: 'Admin password reset successfully.' };
+      return { success: false, error: res.error || 'Failed to update profile.' };
+    } catch (error) {
+      return { success: false, error: error.message };
     }
-    const student = students.find(s => s.email.toLowerCase() === email.toLowerCase());
-    if (!student) {
-      return { success: false, error: 'No account registered with this email.' };
+  };
+
+  const changePassword = async (currentPassword, newPassword) => {
+    if (!currentUser) return { success: false, error: 'No user logged in' };
+    try {
+      const res = await api.auth.changePassword({
+        id: currentUser.id,
+        role: currentUser.role,
+        currentPassword,
+        newPassword
+      });
+      if (res.success) {
+        const updated = { ...currentUser, password: newPassword };
+        setCurrentUser(updated);
+        if (currentUser.role === 'student') {
+          setStudents(prev => prev.map(s => s.id === currentUser.id ? { ...s, password: newPassword } : s));
+        }
+        return { success: true };
+      }
+      return { success: false, error: res.error || 'Failed to change password.' };
+    } catch (error) {
+      return { success: false, error: error.message };
     }
-    setStudents(prev => prev.map(s => s.email.toLowerCase() === email.toLowerCase() ? { ...s, password: newPassword } : s));
-    if (currentUser?.email?.toLowerCase() === email.toLowerCase()) {
-      setCurrentUser(prev => ({ ...prev, password: newPassword }));
+  };
+
+  const resetPasswordWithOTP = async (email, newPassword) => {
+    try {
+      const res = await api.auth.resetPassword(email, newPassword);
+      if (res.success) {
+        // Refresh local student lists
+        const updatedStudents = await api.students.getAll();
+        setStudents(updatedStudents);
+        
+        if (currentUser?.email?.toLowerCase() === email.toLowerCase()) {
+          setCurrentUser(prev => ({ ...prev, password: newPassword }));
+        }
+        return { success: true, message: res.message || 'Password reset successfully!' };
+      }
+      return { success: false, error: res.error || 'Password reset failed.' };
+    } catch (error) {
+      return { success: false, error: error.message };
     }
-    return { success: true, message: 'Password reset successfully!' };
   };
 
   // ---- NOTICES ----
-  const addNotice = (notice) => {
-    const n = { ...notice, id: `NOT${Date.now()}`, postedAt: new Date().toISOString(), postedBy: 'Admin', isNew: true };
-    setNotices(prev => [n, ...prev]);
+  const addNotice = async (notice) => {
+    try {
+      const created = await api.notices.create(notice);
+      setNotices(prev => [created, ...prev]);
+    } catch (error) {
+      console.error('Failed to add notice:', error);
+    }
   };
-  const updateNotice = (id, data) => setNotices(prev => prev.map(n => n.id === id ? { ...n, ...data } : n));
-  const deleteNotice = (id) => setNotices(prev => prev.filter(n => n.id !== id));
+
+  const updateNotice = async (id, data) => {
+    try {
+      await api.notices.update(id, data);
+      setNotices(prev => prev.map(n => n.id === id ? { ...n, ...data } : n));
+    } catch (error) {
+      console.error('Failed to update notice:', error);
+    }
+  };
+
+  const deleteNotice = async (id) => {
+    try {
+      await api.notices.delete(id);
+      setNotices(prev => prev.filter(n => n.id !== id));
+    } catch (error) {
+      console.error('Failed to delete notice:', error);
+    }
+  };
 
   // ---- ASSIGNMENTS ----
-  const addAssignment = (assignment) => {
-    const a = { ...assignment, id: `ASN${Date.now()}`, postedAt: new Date().toISOString(), submittedBy: [] };
-    setAssignments(prev => [a, ...prev]);
+  const addAssignment = async (assignment) => {
+    try {
+      const created = await api.assignments.create(assignment);
+      setAssignments(prev => [created, ...prev]);
+    } catch (error) {
+      console.error('Failed to add assignment:', error);
+    }
   };
-  const updateAssignment = (id, data) => setAssignments(prev => prev.map(a => a.id === id ? { ...a, ...data } : a));
-  const deleteAssignment = (id) => setAssignments(prev => prev.filter(a => a.id !== id));
-  const markSubmitted = (assignmentId, studentId) => {
-    setAssignments(prev => prev.map(a =>
-      a.id === assignmentId ? { ...a, submittedBy: [...(a.submittedBy || []), studentId] } : a
-    ));
+
+  const updateAssignment = async (id, data) => {
+    try {
+      await api.assignments.update(id, data);
+      setAssignments(prev => prev.map(a => a.id === id ? { ...a, ...data } : a));
+    } catch (error) {
+      console.error('Failed to update assignment:', error);
+    }
+  };
+
+  const deleteAssignment = async (id) => {
+    try {
+      await api.assignments.delete(id);
+      setAssignments(prev => prev.filter(a => a.id !== id));
+    } catch (error) {
+      console.error('Failed to delete assignment:', error);
+    }
+  };
+
+  const markSubmitted = async (assignmentId, studentId) => {
+    try {
+      await api.assignments.submit(assignmentId, studentId);
+      setAssignments(prev => prev.map(a =>
+        a.id === assignmentId ? { ...a, submittedBy: [...(a.submittedBy || []), studentId] } : a
+      ));
+    } catch (error) {
+      console.error('Failed to submit assignment:', error);
+    }
   };
 
   // ---- MATERIALS ----
-  const addMaterial = (material) => {
-    const m = { ...material, id: `MAT${Date.now()}`, uploadedAt: new Date().toISOString(), uploadedBy: 'Admin' };
-    setMaterials(prev => [m, ...prev]);
+  const addMaterial = async (material) => {
+    try {
+      const created = await api.materials.create(material);
+      setMaterials(prev => [created, ...prev]);
+    } catch (error) {
+      console.error('Failed to add study material:', error);
+    }
   };
-  const updateMaterial = (id, data) => setMaterials(prev => prev.map(m => m.id === id ? { ...m, ...data } : m));
-  const deleteMaterial = (id) => setMaterials(prev => prev.filter(m => m.id !== id));
+
+  const updateMaterial = async (id, data) => {
+    try {
+      await api.materials.update(id, data);
+      setMaterials(prev => prev.map(m => m.id === id ? { ...m, ...data } : m));
+    } catch (error) {
+      console.error('Failed to update study material:', error);
+    }
+  };
+
+  const deleteMaterial = async (id) => {
+    try {
+      await api.materials.delete(id);
+      setMaterials(prev => prev.filter(m => m.id !== id));
+    } catch (error) {
+      console.error('Failed to delete study material:', error);
+    }
+  };
 
   // ---- QUESTIONS ----
-  const addQuestion = (question) => {
-    const q = { ...question, id: `QSN${Date.now()}`, uploadedAt: new Date().toISOString(), uploadedBy: 'Admin' };
-    setQuestions(prev => [q, ...prev]);
+  const addQuestion = async (question) => {
+    try {
+      const created = await api.questions.create(question);
+      setQuestions(prev => [created, ...prev]);
+    } catch (error) {
+      console.error('Failed to add question:', error);
+    }
   };
-  const updateQuestion = (id, data) => setQuestions(prev => prev.map(q => q.id === id ? { ...q, ...data } : q));
-  const deleteQuestion = (id) => setQuestions(prev => prev.filter(q => q.id !== id));
+
+  const updateQuestion = async (id, data) => {
+    try {
+      await api.questions.update(id, data);
+      setQuestions(prev => prev.map(q => q.id === id ? { ...q, ...data } : q));
+    } catch (error) {
+      console.error('Failed to update question:', error);
+    }
+  };
+
+  const deleteQuestion = async (id) => {
+    try {
+      await api.questions.delete(id);
+      setQuestions(prev => prev.filter(q => q.id !== id));
+    } catch (error) {
+      console.error('Failed to delete question:', error);
+    }
+  };
 
   // ---- RESULTS ----
-  const addSemesterResult = (semesterData) => {
-    setResults(prev => {
-      const exists = prev.find(r => r.semesterId === semesterData.semesterId);
-      if (exists) {
-        return prev.map(r => r.semesterId === semesterData.semesterId ? { ...r, ...semesterData } : r);
-      }
-      return [...prev, semesterData];
-    });
+  const addSemesterResult = async (semesterData) => {
+    try {
+      // semesterData shape: { semesterId, studentResults: { [studentId]: subjectResults } }
+      const studentId = Object.keys(semesterData.studentResults)[0];
+      const subjectResults = semesterData.studentResults[studentId];
+      await api.results.save(semesterData.semesterId, studentId, subjectResults);
+      
+      // Refresh results list from database to ensure consistency
+      const updated = await api.results.getAll();
+      setResults(updated);
+    } catch (error) {
+      console.error('Failed to add semester result:', error);
+    }
   };
-  const updateStudentResult = (semesterId, studentId, subjectResults) => {
-    setResults(prev => prev.map(sem => {
-      if (sem.semesterId !== semesterId) return sem;
-      return {
-        ...sem,
-        studentResults: {
-          ...sem.studentResults,
-          [studentId]: subjectResults,
-        },
-      };
-    }));
+
+  const updateStudentResult = async (semesterId, studentId, subjectResults) => {
+    try {
+      await api.results.save(semesterId, studentId, subjectResults);
+      const updated = await api.results.getAll();
+      setResults(updated);
+    } catch (error) {
+      console.error('Failed to update student result:', error);
+    }
   };
-  const deleteSemesterResult = (semesterId) => {
-    setResults(prev => prev.filter(r => r.semesterId !== semesterId));
+
+  const deleteSemesterResult = async (semesterId) => {
+    try {
+      await api.results.deleteSemester(semesterId);
+      setResults(prev => prev.filter(r => r.semesterId !== semesterId));
+    } catch (error) {
+      console.error('Failed to delete semester results:', error);
+    }
   };
-  const deleteStudentResult = (semesterId, studentId) => {
-    setResults(prev => prev.map(sem => {
-      if (sem.semesterId !== semesterId) return sem;
-      const updatedStudentResults = { ...sem.studentResults };
-      delete updatedStudentResults[studentId];
-      return { ...sem, studentResults: updatedStudentResults };
-    }));
+
+  const deleteStudentResult = async (semesterId, studentId) => {
+    try {
+      await api.results.deleteStudent(semesterId, studentId);
+      setResults(prev => prev.map(sem => {
+        if (sem.semesterId !== semesterId) return sem;
+        const updatedStudentResults = { ...sem.studentResults };
+        delete updatedStudentResults[studentId];
+        return { ...sem, studentResults: updatedStudentResults };
+      }));
+    } catch (error) {
+      console.error('Failed to delete student result:', error);
+    }
   };
 
   // ---- FACULTY ----
-  const addFaculty = (f) => {
-    const newF = { ...f, id: `FAC${Date.now()}` };
-    setFaculty(prev => [...prev, newF]);
+  const addFaculty = async (f) => {
+    try {
+      const created = await api.faculty.create(f);
+      setFaculty(prev => [...prev, created]);
+    } catch (error) {
+      console.error('Failed to add faculty member:', error);
+    }
   };
-  const updateFaculty = (id, data) => setFaculty(prev => prev.map(f => f.id === id ? { ...f, ...data } : f));
-  const deleteFaculty = (id) => setFaculty(prev => prev.filter(f => f.id !== id));
+
+  const updateFaculty = async (id, data) => {
+    try {
+      await api.faculty.update(id, data);
+      const updated = await api.faculty.getAll();
+      setFaculty(updated);
+    } catch (error) {
+      console.error('Failed to update faculty member:', error);
+    }
+  };
+
+  const deleteFaculty = async (id) => {
+    try {
+      await api.faculty.delete(id);
+      setFaculty(prev => prev.filter(f => f.id !== id));
+    } catch (error) {
+      console.error('Failed to delete faculty member:', error);
+    }
+  };
 
   // ---- STUDENTS ----
-  const addStudent = (data) => {
-    const newStudent = {
-      ...data,
-      id: `STU${String(students.length + 1).padStart(3, '0')}`,
-      role: 'student',
-      registeredAt: new Date().toISOString(),
-    };
-    setStudents(prev => [...prev, newStudent]);
-    return { success: true };
+  const addStudent = async (data) => {
+    try {
+      const res = await api.students.create(data);
+      if (res.success) {
+        setStudents(prev => [...prev, res.data]);
+        return { success: true };
+      }
+      return { success: false, error: 'Failed to save student' };
+    } catch (error) {
+      console.error('Failed to add student:', error);
+      return { success: false, error: error.message };
+    }
   };
-  const updateStudent = (id, data) => setStudents(prev => prev.map(s => s.id === id ? { ...s, ...data } : s));
-  const deleteStudent = (id) => setStudents(prev => prev.filter(s => s.id !== id));
+
+  const updateStudent = async (id, data) => {
+    try {
+      await api.students.update(id, data);
+      setStudents(prev => prev.map(s => s.id === id ? { ...s, ...data } : s));
+    } catch (error) {
+      console.error('Failed to update student:', error);
+    }
+  };
+
+  const deleteStudent = async (id) => {
+    try {
+      await api.students.delete(id);
+      setStudents(prev => prev.filter(s => s.id !== id));
+    } catch (error) {
+      console.error('Failed to delete student:', error);
+    }
+  };
 
   // ---- SUBJECTS ----
-  const addSubject = (sub) => setSubjects(prev => [...prev, sub]);
-  const updateSubject = (code, data) => setSubjects(prev => prev.map(s => s.code === code ? { ...s, ...data } : s));
-  const deleteSubject = (code) => setSubjects(prev => prev.filter(s => s.code !== code));
+  const addSubject = async (sub) => {
+    // Subjects are read-only/reference data in current model, but let's support state-syncing
+    setSubjects(prev => [...prev, sub]);
+  };
+  const updateSubject = async (code, data) => {
+    setSubjects(prev => prev.map(s => s.code === code ? { ...s, ...data } : s));
+  };
+  const deleteSubject = async (code) => {
+    setSubjects(prev => prev.filter(s => s.code !== code));
+  };
 
   // ---- ROUTINE ----
-  const updateRoutine = (day, slots) => setRoutine(prev => ({ ...prev, [day]: slots }));
+  const updateRoutine = async (day, slots) => {
+    try {
+      await api.routine.update(day, slots);
+      setRoutine(prev => ({ ...prev, [day]: slots }));
+    } catch (error) {
+      console.error('Failed to update routine:', error);
+    }
+  };
 
   const value = {
-    currentUser, login, logout, register, updateUserProfile, changePassword, resetPasswordWithOTP,
+    loading, currentUser, login, logout, register, updateUserProfile, changePassword, resetPasswordWithOTP,
     students, addStudent, updateStudent, deleteStudent,
     notices, addNotice, updateNotice, deleteNotice,
     assignments, addAssignment, updateAssignment, deleteAssignment, markSubmitted,

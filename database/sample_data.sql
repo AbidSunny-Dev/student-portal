@@ -219,3 +219,21 @@ VALUES
 ('QSN004', 'CSE303', 2024, 'Mid', 
  '["Explain Big-O, Big-Omega, and Big-Theta notations.", "Derive the time complexity of Merge Sort using recurrence relation.", "Explain the divide and conquer strategy with an example.", "Compare greedy algorithm and dynamic programming approaches."]',
  'Dr. Md. Rafiqul Islam', '2025-02-01 08:00:00');
+
+-- 11. INSERT CLASS ROUTINE
+INSERT INTO ClassRoutine (day, time, subject_code, room, faculty, color)
+VALUES
+('Sunday', '08:00 - 09:30', 'CSE301', 'Room 201', 'Md. Shahriar Hossain', 'primary'),
+('Sunday', '09:30 - 11:00', 'CSE303', 'Room 201', 'Dr. Md. Rafiqul Islam', 'purple'),
+('Sunday', '11:00 - 12:30', 'CSE306L', 'Lab 101', 'Md. Shahriar Hossain', 'accent'),
+('Monday', '08:00 - 09:30', 'CSE302', 'Room 202', 'Farhana Akter', 'green'),
+('Monday', '09:30 - 11:00', 'CSE304', 'Room 202', 'Farhana Akter', 'teal'),
+('Monday', '02:00 - 04:00', 'CSE307L', 'Lab 102', 'Farhana Akter', 'green'),
+('Tuesday', '08:00 - 09:30', 'CSE305', 'Room 203', 'Md. Shahriar Hossain', 'yellow'),
+('Tuesday', '09:30 - 11:00', 'CSE301', 'Room 201', 'Md. Shahriar Hossain', 'primary'),
+('Wednesday', '08:00 - 09:30', 'CSE303', 'Room 201', 'Dr. Md. Rafiqul Islam', 'purple'),
+('Wednesday', '09:30 - 11:00', 'CSE304', 'Room 202', 'Farhana Akter', 'teal'),
+('Wednesday', '11:00 - 12:30', 'CSE305', 'Room 203', 'Md. Shahriar Hossain', 'yellow'),
+('Thursday', '08:00 - 09:30', 'CSE302', 'Room 202', 'Farhana Akter', 'green'),
+('Thursday', '09:30 - 11:00', 'CSE303', 'Room 201', 'Dr. Md. Rafiqul Islam', 'purple');
+

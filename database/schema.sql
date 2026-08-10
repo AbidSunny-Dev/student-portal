@@ -9,6 +9,8 @@ USE academic_management;
 
 -- Disable foreign key checks temporarily to drop tables in any order
 SET FOREIGN_KEY_CHECKS = 0;
+DROP TABLE IF EXISTS AssignmentSubmission;
+DROP TABLE IF EXISTS ClassRoutine;
 DROP TABLE IF EXISTS Result;
 DROP TABLE IF EXISTS QuestionBank;
 DROP TABLE IF EXISTS StudyMaterial;
@@ -41,7 +43,7 @@ CREATE TABLE Student (
     batch INT NOT NULL,
     section CHAR(2) NOT NULL,
     dept VARCHAR(50) DEFAULT 'CSE',
-    phone VARCHAR(20),
+    phone VARCHAR(50),
     role VARCHAR(20) DEFAULT 'student',
     registered_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT chk_student_section CHECK (section REGEXP '^[A-Z]$'),
@@ -55,7 +57,7 @@ CREATE TABLE Faculty (
     designation VARCHAR(100) NOT NULL,
     dept VARCHAR(50) DEFAULT 'CSE',
     email VARCHAR(100) UNIQUE NOT NULL,
-    phone VARCHAR(20),
+    phone VARCHAR(50),
     education TEXT,
     office VARCHAR(100),
     photo VARCHAR(255) NULL
@@ -162,6 +164,32 @@ CREATE TABLE QuestionBank (
     CONSTRAINT chk_question_exam_type CHECK (exam_type IN ('Mid', 'Final')),
     CONSTRAINT chk_question_year CHECK (year >= 2000 AND year <= 2100)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- 11. ASSIGNMENT SUBMISSION TABLE
+CREATE TABLE AssignmentSubmission (
+    assignment_id VARCHAR(20) NOT NULL,
+    student_id VARCHAR(10) NOT NULL,
+    submitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (assignment_id, student_id),
+    CONSTRAINT fk_submission_assignment FOREIGN KEY (assignment_id) 
+        REFERENCES Assignment(id) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT fk_submission_student FOREIGN KEY (student_id) 
+        REFERENCES Student(id) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- 12. CLASS ROUTINE TABLE
+CREATE TABLE ClassRoutine (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    day VARCHAR(15) NOT NULL,
+    time VARCHAR(50) NOT NULL,
+    subject_code VARCHAR(10) NOT NULL,
+    room VARCHAR(50) NOT NULL,
+    faculty VARCHAR(100) NOT NULL,
+    color VARCHAR(20) NOT NULL,
+    CONSTRAINT fk_routine_subject FOREIGN KEY (subject_code) 
+        REFERENCES Subject(code) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 
 -- ============================================================
 -- INDEXES FOR PERFORMANCE OPTIMIZATION

@@ -62,7 +62,7 @@ export const ForgotPasswordPage = () => {
     setStep(3);
   };
 
-  const handleStep3Submit = (e) => {
+  const handleStep3Submit = async (e) => {
     e.preventDefault();
     setErrorMsg('');
     if (newPassword.length < 6) {
@@ -74,7 +74,7 @@ export const ForgotPasswordPage = () => {
       return;
     }
 
-    const res = resetPasswordWithOTP(targetEmail, newPassword);
+    const res = await resetPasswordWithOTP(targetEmail, newPassword);
     if (res.success) {
       setStep(4);
     } else {

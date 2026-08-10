@@ -16,7 +16,7 @@ export const LoginPage = () => {
     setError('');
     setLoading(true);
     await new Promise(r => setTimeout(r, 600)); // simulate network
-    const result = login(form.email, form.password);
+    const result = await login(form.email, form.password);
     setLoading(false);
     if (result.success) {
       navigate(result.role === 'admin' ? '/admin' : '/dashboard');

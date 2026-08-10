@@ -27,7 +27,7 @@ export const RegisterPage = () => {
     }
     setLoading(true);
     await new Promise(r => setTimeout(r, 700));
-    const result = register({ name: form.name, email: form.email, studentId: form.studentId, phone: form.phone, password: form.password });
+    const result = await register({ name: form.name, email: form.email, studentId: form.studentId, phone: form.phone, password: form.password });
     setLoading(false);
     if (result.success) {
       setSuccess(true);
