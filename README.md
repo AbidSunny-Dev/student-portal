@@ -259,6 +259,6 @@ You can type the following test accounts:
 
 ---
 
-## 🎥 Demo Video
+## 🎥 Video Explanation
 
-👉 [Watch Project Demo](#) *(Add your video link here)*
+👉 [Watch Video Explanation](https://drive.google.com/file/d/1CwQiw2rEK6EuR_oCSdRTmsNV1vEaZ8P0/view?usp=sharing)
