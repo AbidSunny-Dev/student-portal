@@ -1,0 +1,240 @@
+========================================================================
+ACADEMIC MANAGEMENT PLATFORM - ENTITY RELATIONSHIP (ER) DIAGRAM
+========================================================================
+
+This text file contains a detailed description of the Entity-Relationship 
+Model for the database, including all entities, attributes, primary keys (PK), 
+foreign keys (FK), check constraints, and relationship descriptions.
+
+------------------------------------------------------------------------
+1. ENTITY DETAILS & SCHEMA DESCRIPTION
+------------------------------------------------------------------------
+
+* Admin Table
+  - Attributes:
+    * id (VARCHAR(10)) [PRIMARY KEY] -> Unique system ID for the admin (e.g. ADM001).
+    * name (VARCHAR(100)) [NOT NULL] -> Admin's name.
+    * email (VARCHAR(100)) [UNIQUE, NOT NULL] -> Unique email for login.
+    * password (VARCHAR(255)) [NOT NULL] -> Encrypted password string.
+    * role (VARCHAR(20)) [DEFAULT 'admin'] -> Access role.
+    * created_at (TIMESTAMP) [DEFAULT CURRENT_TIMESTAMP]
+
+* Student Table
+  - Attributes:
+    * id (VARCHAR(10)) [PRIMARY KEY] -> Internal ID (e.g. STU001).
+    * name (VARCHAR(100)) [NOT NULL] -> Student's name.
+    * email (VARCHAR(100)) [UNIQUE, NOT NULL] -> Unique email for login.
+    * password (VARCHAR(255)) [NOT NULL] -> Encrypted password string.
+    * student_id (VARCHAR(20)) [UNIQUE, NOT NULL] -> Academic registration ID.
+    * batch (INT) [NOT NULL] -> Batch number.
+    * section (CHAR(2)) [NOT NULL] -> Section ID.
+    * dept (VARCHAR(50)) [DEFAULT 'CSE'] -> Department name.
+    * phone (VARCHAR(50)) -> Contact number.
+    * role (VARCHAR(20)) [DEFAULT 'student'] -> Access role.
+    * registered_at (TIMESTAMP) [DEFAULT CURRENT_TIMESTAMP]
+  - Constraints:
+    * CHECK (section REGEXP '^[A-Z]$') -> Valid section format.
+    * CHECK (batch > 0) -> Batch number must be positive.
+
+* Faculty Table
+  - Attributes:
+    * id (VARCHAR(10)) [PRIMARY KEY] -> Faculty ID (e.g. FAC001).
+    * name (VARCHAR(100)) [NOT NULL] -> Faculty name.
+    * designation (VARCHAR(100)) [NOT NULL] -> Academic title.
+    * dept (VARCHAR(50)) [DEFAULT 'CSE'] -> Department.
+    * email (VARCHAR(100)) [UNIQUE, NOT NULL] -> Contact email.
+    * phone (VARCHAR(50)) -> Contact number.
+    * education (TEXT) -> Degree/credentials detail.
+    * office (VARCHAR(100)) -> Office room identifier.
+    * photo (VARCHAR(255)) [NULL] -> Photo resource location.
+
+* Subject Table
+  - Attributes:
+    * code (VARCHAR(10)) [PRIMARY KEY] -> Subject code (e.g. CSE301).
+    * name (VARCHAR(150)) [NOT NULL] -> Title of the subject.
+    * credit (DECIMAL(3,2)) [NOT NULL] -> Number of credits.
+    * faculty_id (VARCHAR(10)) [FOREIGN KEY -> Faculty.id] -> Course instructor.
+  - Constraints:
+    * ON DELETE SET NULL / ON UPDATE CASCADE -> Keeps records if faculty leaves.
+    * CHECK (credit > 0.0 AND credit <= 6.0)
+
+* Semester Table
+  - Attributes:
+    * id (VARCHAR(20)) [PRIMARY KEY] -> Semester identifier (e.g. SEM_3_1).
+    * name (VARCHAR(50)) [NOT NULL] -> Semester title (e.g. Semester 3.1).
+    * year (INT) [NOT NULL] -> Calendar year.
+  - Constraints:
+    * CHECK (year >= 2000 AND year <= 2100)
+
+* Result Table
+  - Attributes:
+    * id (INT AUTO_INCREMENT) [PRIMARY KEY] -> Record ID.
+    * student_id (VARCHAR(10)) [FOREIGN KEY -> Student.id] -> Reference to student.
+    * semester_id (VARCHAR(20)) [FOREIGN KEY -> Semester.id] -> Reference to semester.
+    * subject_code (VARCHAR(10)) [FOREIGN KEY -> Subject.code] -> Reference to subject.
+    * grade (VARCHAR(5)) [NOT NULL] -> Letter grade (A+, A, B, etc.).
+    * grade_point (DECIMAL(3,2)) [NOT NULL] -> Numerical grade point.
+  - Key Constraints:
+    * UNIQUE KEY (student_id, semester_id, subject_code) -> A student cannot have multiple grades for the same subject in the same semester.
+    * ON DELETE CASCADE / ON UPDATE CASCADE -> Result is deleted if student or course is deleted.
+    * CHECK (grade_point >= 0.00 AND grade_point <= 4.00)
+
+* Assignment Table
+  - Attributes:
+    * id (VARCHAR(20)) [PRIMARY KEY] -> Assignment unique ID (e.g. ASN001).
+    * title (VARCHAR(150)) [NOT NULL] -> Title.
+    * subject_code (VARCHAR(10)) [FOREIGN KEY -> Subject.code] -> Course subject.
+    * description (TEXT) -> Assignment instructions.
+    * deadline (DATETIME) [NOT NULL] -> Submission deadline.
+    * total_marks (INT) [NOT NULL] -> Points possible.
+    * submission_type (VARCHAR(50)) [NOT NULL] -> Online/File/Link.
+    * posted_at (TIMESTAMP) [DEFAULT CURRENT_TIMESTAMP]
+    * faculty_id (VARCHAR(10)) [FOREIGN KEY -> Faculty.id] -> Assigned by teacher.
+  - Constraints:
+    * ON DELETE CASCADE / ON UPDATE CASCADE (for Subject)
+    * ON DELETE SET NULL / ON UPDATE CASCADE (for Faculty)
+    * CHECK (total_marks > 0)
+
+* AssignmentSubmission Table (Many-to-Many Bridge Table)
+  - Attributes:
+    * assignment_id (VARCHAR(20)) [PRIMARY KEY, FOREIGN KEY -> Assignment.id]
+    * student_id (VARCHAR(10)) [PRIMARY KEY, FOREIGN KEY -> Student.id]
+    * submitted_at (TIMESTAMP) [DEFAULT CURRENT_TIMESTAMP]
+  - Constraints:
+    * ON DELETE CASCADE -> Clears submissions if student or assignment is deleted.
+
+* Notice Table
+  - Attributes:
+    * id (VARCHAR(20)) [PRIMARY KEY] -> Notice ID (e.g. NOT001).
+    * title (VARCHAR(250)) [NOT NULL] -> Heading.
+    * content (TEXT) [NOT NULL] -> Announcement details.
+    * priority (VARCHAR(10)) [NOT NULL] -> Priority priority tag.
+    * category (VARCHAR(50)) [NOT NULL] -> Admin, Exam, Class, etc.
+    * posted_by (VARCHAR(100)) [NOT NULL] -> Author.
+    * posted_at (TIMESTAMP) [DEFAULT CURRENT_TIMESTAMP]
+  - Constraints:
+    * CHECK (priority IN ('high', 'medium', 'low'))
+
+* StudyMaterial Table
+  - Attributes:
+    * id (VARCHAR(20)) [PRIMARY KEY] -> Resource ID (e.g. MAT001).
+    * title (VARCHAR(250)) [NOT NULL] -> Resource title.
+    * subject_code (VARCHAR(10)) [FOREIGN KEY -> Subject.code] -> Course subject.
+    * semester_id (VARCHAR(20)) [FOREIGN KEY -> Semester.id] -> Semester filter.
+    * type (VARCHAR(50)) [NOT NULL] -> slide/book/notes/link/lab.
+    * file_type (VARCHAR(10)) [NOT NULL] -> PDF, PPT, link, etc.
+    * url (VARCHAR(255)) [NULL] -> Web link.
+    * file_name (VARCHAR(255)) [NULL]
+    * size (VARCHAR(20)) [NULL]
+    * uploaded_by (VARCHAR(100)) [NOT NULL]
+    * uploaded_at (TIMESTAMP) [DEFAULT CURRENT_TIMESTAMP]
+  - Constraints:
+    * ON DELETE CASCADE / ON UPDATE CASCADE (for Subject and Semester)
+    * CHECK (type IN ('slide', 'book', 'notes', 'link', 'lab'))
+
+* QuestionBank Table
+  - Attributes:
+    * id (VARCHAR(20)) [PRIMARY KEY] -> Exam paper ID (e.g. QSN001).
+    * subject_code (VARCHAR(10)) [FOREIGN KEY -> Subject.code] -> Subject.
+    * year (INT) [NOT NULL] -> Exam year.
+    * exam_type (VARCHAR(10)) [NOT NULL] -> Mid/Final.
+    * questions (JSON) [NOT NULL] -> Structured question list stored as JSON array.
+    * uploaded_by (VARCHAR(100)) [NOT NULL]
+    * uploaded_at (TIMESTAMP) [DEFAULT CURRENT_TIMESTAMP]
+  - Constraints:
+    * ON DELETE CASCADE / ON UPDATE CASCADE (for Subject)
+    * CHECK (exam_type IN ('Mid', 'Final'))
+    * CHECK (year >= 2000 AND year <= 2100)
+
+* ClassRoutine Table
+  - Attributes:
+    * id (INT AUTO_INCREMENT) [PRIMARY KEY]
+    * day (VARCHAR(15)) [NOT NULL] -> Day of the week (Sunday to Thursday).
+    * time (VARCHAR(50)) [NOT NULL] -> Slot time window (e.g. 08:00 - 09:30).
+    * subject_code (VARCHAR(10)) [FOREIGN KEY -> Subject.code] -> Scheduled course.
+    * room (VARCHAR(50)) [NOT NULL] -> Room number.
+    * faculty (VARCHAR(100)) [NOT NULL] -> Faculty name.
+    * color (VARCHAR(20)) [NOT NULL] -> Theme color representation.
+  - Constraints:
+    * ON DELETE CASCADE / ON UPDATE CASCADE (for Subject)
+
+
+------------------------------------------------------------------------
+2. RELATIONSHIPS & CARDINALITY SUMMARY
+------------------------------------------------------------------------
+
+1. Faculty teaches Subject (1:N):
+   - A Faculty member teaches zero, one, or many Subjects.
+   - A Subject is taught by at most one Faculty member.
+   - Database field: Subject.faculty_id FK.
+
+2. Student obtains Result (1:N):
+   - A Student has zero, one, or many Semester Results.
+   - A Result belongs to exactly one Student.
+   - Database field: Result.student_id FK (ON DELETE CASCADE).
+
+3. Semester records Result (1:N):
+   - A Semester records many Results.
+   - A Result belongs to exactly one Semester.
+   - Database field: Result.semester_id FK.
+
+4. Subject graded in Result (1:N):
+   - A Subject is graded across many Results.
+   - A Result belongs to exactly one Subject.
+   - Database field: Result.subject_code FK.
+
+5. Subject hosts Assignment (1:N):
+   - A Subject has zero, one, or many Assignments.
+   - An Assignment belongs to exactly one Subject.
+   - Database field: Assignment.subject_code FK.
+
+6. Faculty assigns Assignment (1:N):
+   - A Faculty member can assign zero, one, or many Assignments.
+   - An Assignment is assigned by one Faculty member.
+   - Database field: Assignment.faculty_id FK.
+
+7. Student submits Assignment (M:N via AssignmentSubmission):
+   - A Student submits zero, one, or many Assignments.
+   - An Assignment receives submissions from zero, one, or many Students.
+   - Bridge table: AssignmentSubmission mapping assignment_id FK and student_id FK.
+
+8. Subject has StudyMaterial (1:N):
+   - A Subject contains zero, one, or many Study Materials.
+   - A StudyMaterial belongs to exactly one Subject.
+   - Database field: StudyMaterial.subject_code FK.
+
+9. Semester groups StudyMaterial (1:N):
+   - A Semester has zero, one, or many Study Materials.
+   - A StudyMaterial is intended for exactly one Semester.
+   - Database field: StudyMaterial.semester_id FK.
+
+10. Subject stores QuestionBank (1:N):
+    - A Subject has zero, one, or many QuestionBank exam entries.
+    - A QuestionBank entry belongs to exactly one Subject.
+    - Database field: QuestionBank.subject_code FK.
+
+11. Subject scheduled in ClassRoutine (1:N):
+    - A Subject has zero, one, or many routine timeslots.
+    - A ClassRoutine entry is assigned to exactly one Subject.
+    - Database field: ClassRoutine.subject_code FK.
+
+
+------------------------------------------------------------------------
+3. VISUAL RELATIONSHIPS (MERMAID SYNTAX)
+------------------------------------------------------------------------
+You can paste the code below into any Mermaid viewer (e.g. mermaid.live) 
+to render the visual diagram dynamically:
+
+erDiagram
+    Faculty ||--o{ Subject : teaches
+    Student ||--|{ Result : obtains
+    Semester ||--|{ Result : records
+    Subject ||--|{ Result : graded_in
+    Subject ||--|{ Assignment : has
+    Faculty ||--o{ Assignment : assigns
+    Student ||--|{ AssignmentSubmission : submits
+    Assignment ||--|{ AssignmentSubmission : receives
+    Subject ||--|{ StudyMaterial : features
+    Semester ||--|{ StudyMaterial : used_in
+    Subject ||--|{ QuestionBank : contains
+    Subject ||--|{ ClassRoutine : scheduled_in

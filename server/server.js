@@ -12,6 +12,8 @@ const PORT = process.env.PORT || 5000;
 app.use(cors({ origin: 'http://localhost:5173' }));
 app.use(express.json());
 
+
+
 // Helper to verify passwords (supports both bcrypt and legacy plain-text check)
 function verifyPassword(plainText, dbPassword) {
   if (dbPassword.startsWith('$2a$') || dbPassword.startsWith('$2b$')) {
@@ -75,7 +77,7 @@ app.post('/api/auth/register', async (req, res) => {
     const [lastStudent] = await db.query('SELECT id FROM Student ORDER BY id DESC LIMIT 1');
     let nextNum = 1;
     if (lastStudent.length > 0) {
-      const lastId = lastStudent[0].id;
+      const lastId = lastStudent[0].id; 
       const match = lastId.match(/STU(\d+)/);
       if (match) {
         nextNum = parseInt(match[1]) + 1;
@@ -83,6 +85,7 @@ app.post('/api/auth/register', async (req, res) => {
     }
     const newId = `STU${String(nextNum).padStart(3, '0')}`;
     const hashedPassword = bcrypt.hashSync(password, 10);
+    
 
     // Insert student
     await db.query(
@@ -113,6 +116,7 @@ app.post('/api/auth/profile', async (req, res) => {
     return res.status(500).json({ success: false, error: 'Server error during profile update.' });
   }
 });
+
 
 // POST /api/auth/change-password
 app.post('/api/auth/change-password', async (req, res) => {
@@ -169,6 +173,7 @@ app.post('/api/auth/reset-password', async (req, res) => {
 // -------------------------------------------------------------
 
 // GET /api/students
+
 app.get('/api/students', async (req, res) => {
   try {
     const [rows] = await db.query('SELECT * FROM Student ORDER BY id ASC');
@@ -475,6 +480,7 @@ app.delete('/api/assignments/:id', async (req, res) => {
     return res.status(500).json({ error: 'Server error deleting assignment.' });
   }
 });
+
 
 // POST /api/assignments/:id/submit
 app.post('/api/assignments/:id/submit', async (req, res) => {
