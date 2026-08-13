@@ -1,113 +1,264 @@
-# Academic Management Platform
-
-A web-based academic management platform designed for university students and administrators. This project centralizes routines, notices, assignments, faculty information, study materials, and automates semester-wise GPA and CGPA calculations using the Bangladesh University Grants Commission (UGC) grading system.
-
-Built with **React (Vite)**, **Tailwind CSS**, and **Lucide React**, this project also includes a comprehensive **MySQL schema** to showcase database management systems (DBMS) concepts.
+# 🚀 Section Management & Academic Tracking System
 
 ---
 
-## 🚀 Key Features
+## 📌 Overview
 
-### 👤 Student Portal
-- **Dashboard**: Quick stats showing upcoming deadlines, latest notices, GPA trend graph using Recharts, and today's classes.
-- **Notice Board**: Displays announcements tagged with priority levels (High 🔴, Medium 🟡, Low 🟢) and searchable by category.
-- **Assignment Tracker**: Features active countdown timers, status tracking (Pending/Submitted/Overdue), and submission options.
-- **Class Routine**: Interactive weekly grid showing class times, rooms, courses, and faculty names.
-- **Study Materials**: Searchable resource list sorted by subject and semester.
-- **My Results**: Visual grade distribution donut chart, semester GPA calculation, and overall CGPA calculation.
-- **CGPA Calculator & Predictor**: Add/edit mock semester results to perform "what-if" calculations for future semesters.
-- **Question Bank**: Repository of past mid-term and final exam papers.
-
-### ⚙️ Admin Panel
-- **Manage Students & Results**: View registrations, add grades, and update student records.
-- **Notice Board & Assignment CRUD**: Post and edit notices (with priority settings) and assignments.
-- **Routine Editor**: Manage timeslots, subjects, rooms, and assigned faculty.
-- **Faculty & Course Management**: Maintain instructor list and configure course credit loads.
-- **Study Materials & Question Bank Upload**: Distribute resources and archive past exam questions.
+Section Management & Academic Tracking System is a centralized, web-based platform designed for university sections to coordinate all academic resources. It helps students securely log in to access routines, notes, and notices, while providing automated semester GPA and CGPA calculations. The administrative dashboard allows reps and faculty to easily upload resources, post announcements, and manage student grades.
 
 ---
 
-## 💻 Tech Stack
+## 👥 Group Details
 
-- **Frontend Framework**: React (Vite)
-- **Styling**: Tailwind CSS, CSS Grid, Glassmorphism
-- **Routing**: React Router v7
-- **Data Visualization**: Recharts (Donut & Area Charts)
-- **Icons**: Lucide React
-- **Database**: MySQL (5.7.8+ for JSON support)
+* **Group Number:** Batch 61 (Section F)
+* **Course Name:** Database Management System (CSE 223)
+* **Instructor:** Md. Fahmidur Rahman Sakib (Lecturer, Department of Computer Science & Engineering)
 
----
+### 🧑‍🤝‍🧑 Team Members
 
-## 🗄️ Database Design (DBMS)
-
-The platform represents a robust relational model mapping 10 core entities. Database assets are stored in the `/database` directory:
-
-1. [schema.sql](file:///d:/Dbms%20project%20by%20gemini/database/schema.sql): Contains the full DDL (Data Definition Language) with primary keys, foreign keys (`ON DELETE CASCADE` and `ON DELETE SET NULL` constraints), indexes for performance optimization, and `CHECK` constraints (e.g., credit validation, grade points, sections).
-2. [sample_data.sql](file:///d:/Dbms%20project%20by%20gemini/database/sample_data.sql): Seed data containing demo users, faculty, courses, past semester results, notices, assignments, and sample question banks.
-3. [ER_diagram.md](file:///d:/Dbms%20project%20by%20gemini/database/ER_diagram.md): Contains the Mermaid Entity-Relationship diagram showing how entities interconnect.
+| Name | ID | Contribution |
+| --- | --- | --- |
+| Abid Ahmed Sunny | 242-115-285 | Led frontend/backend core development, main app structure, API integration, and dashboard components. |
+| Din Mohammed Toufik | 242-115-265 | Designed the 3NF-normalized MySQL schema (10 tables), GPA/CGPA modules, class routine, and study materials. |
+| Mirza Raiyan Rahman | 242-115-255 | Built authentication (registration, login, role-based access, 4-step OTP wizard) and Vercel CI/CD deployment. |
+| Hamza Choudhury | 242-115-270 | Designed UI/UX with Tailwind CSS and Lucide, ensured responsiveness, and managed testing/bug fixes. |
+| Toyyoba Akter | 242-115-263 | Contributed to UI/UX design, database data seeding inputs, and database ER diagrams. |
 
 ---
 
-## 🛠️ Installation & Setup
+## 🎯 Objective
 
-### 1. Frontend Setup
-1. Clone or extract this repository into your workspace.
-2. In the project directory, run to install dependencies:
+The primary objective of this project is to eliminate the confusion and disorganization of managing section-level academic resources through scattered social media groups. By centralizing routines, schedules, notices, assignments, and results on a single secure platform, the system ensures important updates are never lost, helps students meet deadlines, and automates CGPA tracking and GPA calculations to reduce manual errors.
+
+---
+
+## ✨ Features
+
+* ✅ **Authentication System**: Student registration, secure login, forgot password recovery, and session management.
+* ✅ **Academic Information Management**: Class routine view, class notes download, assignment instructions, homework updates, and priority-tagged academic notices.
+* ✅ **Faculty Information Directory**: Clear records of faculty names, designations, courses taught, contact details, and office hours.
+* ✅ **Academic Tracking System**: Semester-wise result tracking, course-wise grade inputs, automatic GPA/CGPA calculation, and credit weight management.
+* ✅ **Search and Filter Utilities**: Quick search of subject codes, notes, assignment titles, and filters for semester results.
+* ✅ **Role-Based Dashboards**: Customized workspace for student access and an administrative portal for managing resources, posting notices, and updating grades.
+
+---
+
+## 🖼️ Project Preview
+
+### 🔹 UI Screenshots
+
+#### 🔑 Login Page
+![Login Page](public/screenshots/login.png)
+
+#### 👤 Student Portal - Dashboard
+![Student Dashboard](public/screenshots/student_dashboard.png)
+
+#### 📅 Student Portal - Class Routine
+![Class Routine](public/screenshots/routine.png)
+
+#### ⚙️ Administrative Dashboard
+![Admin Dashboard](public/screenshots/admin_dashboard.png)
+
+### 🔹 ER Diagram
+
+```mermaid
+erDiagram
+    Faculty ||--o{ Subject : teaches
+    Student ||--|{ Result : obtains
+    Semester ||--|{ Result : records
+    Subject ||--|{ Result : graded_in
+    Subject ||--|{ Assignment : has
+    Faculty ||--o{ Assignment : assigns
+    Student ||--|{ AssignmentSubmission : submits
+    Assignment ||--|{ AssignmentSubmission : receives
+    Subject ||--|{ StudyMaterial : features
+    Semester ||--|{ StudyMaterial : used_in
+    Subject ||--|{ QuestionBank : contains
+    Subject ||--|{ ClassRoutine : scheduled_in
+
+    Admin {
+        VARCHAR_10 id PK
+        VARCHAR_100 name
+        VARCHAR_100 email
+        VARCHAR_255 password
+        VARCHAR_20 role
+    }
+    Student {
+        VARCHAR_10 id PK
+        VARCHAR_100 name
+        VARCHAR_100 email
+        VARCHAR_255 password
+        VARCHAR_20 student_id
+        INT batch
+        CHAR_2 section
+        VARCHAR_50 dept
+    }
+    Faculty {
+        VARCHAR_10 id PK
+        VARCHAR_100 name
+        VARCHAR_100 designation
+        VARCHAR_50 dept
+        VARCHAR_100 email
+    }
+    Subject {
+        VARCHAR_10 code PK
+        VARCHAR_150 name
+        DECIMAL credit
+        VARCHAR_10 faculty_id FK
+    }
+    Semester {
+        VARCHAR_20 id PK
+        VARCHAR_50 name
+        INT year
+    }
+    Result {
+        INT id PK
+        VARCHAR_10 student_id FK
+        VARCHAR_20 semester_id FK
+        VARCHAR_10 subject_code FK
+        VARCHAR_5 grade
+        DECIMAL grade_point
+    }
+    Assignment {
+        VARCHAR_20 id PK
+        VARCHAR_150 title
+        VARCHAR_10 subject_code FK
+        TEXT description
+        DATETIME deadline
+        INT total_marks
+    }
+    Notice {
+        VARCHAR_20 id PK
+        VARCHAR_250 title
+        TEXT content
+        VARCHAR_10 priority
+        VARCHAR_50 category
+    }
+    StudyMaterial {
+        VARCHAR_20 id PK
+        VARCHAR_250 title
+        VARCHAR_10 subject_code FK
+        VARCHAR_20 semester_id FK
+        VARCHAR_50 type
+        VARCHAR_255 url
+    }
+    QuestionBank {
+        VARCHAR_20 id PK
+        VARCHAR_10 subject_code FK
+        INT year
+        VARCHAR_10 exam_type
+        JSON questions
+    }
+    ClassRoutine {
+        INT id PK
+        VARCHAR_15 day
+        VARCHAR_50 time
+        VARCHAR_10 subject_code FK
+        VARCHAR_50 room
+        VARCHAR_100 faculty
+    }
+```
+
+---
+
+## 🏗️ Tech Stack
+
+**Frontend:**
+Built using **HTML**, **CSS**, **JavaScript**, **Tailwind CSS**, and **DaisyUI** frameworks for high flexibility and modern layout responsiveness. Employs **React (Vite)** for component composition, **React Router v7** for routing, **Recharts** for visualizing result performance and grade distribution charts, and **Lucide React** for dynamic icons.
+
+**Backend:**
+Implemented using **Node.js** and the **Express** framework to construct a robust REST API layer. Features password hashing with **bcryptjs**, cross-origin support with **cors**, and handles environment settings dynamically using **dotenv**.
+
+**Database:**
+Uses **MySQL** (fully compatible with XAMPP and MySQL Workbench) designed around 10 core entities. Key DBMS structures include primary keys, foreign keys (`ON DELETE CASCADE` and `ON DELETE SET NULL` constraints) to ensure relational integrity, custom indexes for optimization, check validation constraints, and multi-column unique keys.
+
+---
+
+## ⚙️ Installation & Setup
+
+### 1️⃣ Database Import
+Ensure you have MySQL installed (e.g., via XAMPP or direct download). Create the database and import the files located in the `/database` directory:
+```bash
+# Log in and create the database
+mysql -u root -p
+CREATE DATABASE academic_management;
+exit;
+
+# Import DDL schema and initial seed data
+mysql -u root -p academic_management < database/schema.sql
+mysql -u root -p academic_management < database/sample_data.sql
+```
+
+### 2️⃣ Backend Configuration & Startup
+1. Navigate to the `server/` directory:
+   ```bash
+   cd server
+   ```
+2. Install backend node packages:
    ```bash
    npm install
    ```
-3. Run the development server locally:
+3. Create database configurations from the example template:
+   ```bash
+   cp .env.example .env
+   ```
+4. Set your local database credentials inside the newly created `.env` file.
+5. Start the backend:
    ```bash
    npm run dev
    ```
-4. Open your browser and navigate to the local URL (usually `http://localhost:5173`).
 
-### 2. Database Schema Import
-If using MySQL (via Command Line, Workbench, or phpMyAdmin):
-1. Create the database:
-   ```sql
-   CREATE DATABASE academic_management;
-   ```
-2. Import the schema file first:
+### 3️⃣ Frontend Client Startup
+1. In a separate terminal shell, navigate to the project root:
    ```bash
-   mysql -u root -p academic_management < database/schema.sql
+   cd ..
    ```
-3. Import the sample data:
+2. Install frontend dependencies:
    ```bash
-   mysql -u root -p academic_management < database/sample_data.sql
+   npm install
    ```
+3. Boot the local development client:
+   ```bash
+   npm run dev
+   ```
+4. View the web interface at `http://localhost:5173`.
+
+### 🔑 Quick Demo Login Credentials
+You can type the following test accounts:
+* **Student Account:**
+  * **Email:** `arif.hossain@student.metrouni.edu.bd`
+  * **Password:** `student123`
+* **Admin Account:**
+  * **Email:** `admin@metrouni.edu.bd`
+  * **Password:** `admin123`
 
 ---
 
-## 🔑 Demo Login Credentials
+## 🗂️ Project Structure
 
-You can use the built-in quick demo buttons on the login screen or type the following:
-
-### 👤 Student Account (Full mock history)
-- **Email**: `arif.hossain@student.metrouni.edu.bd`
-- **Password**: `student123`
-
-### ⚙️ Admin Account (Write/Edit privileges)
-- **Email**: `admin@metrouni.edu.bd`
-- **Password**: `admin123`
+```
+/dbms-project-root
+│── database/             # MySQL DDL Schema, seed data, and ER diagram docs
+│── public/               # Public static assets for the React application
+│── server/               # Node.js + Express backend server
+│   │── scripts/          # Seeding script for loading sample data
+│   │── db.js             # MySQL database connection helper
+│   │── server.js         # API routes and server server logic
+│   └── .env.example      # Environment variable template
+│── src/                  # React (Vite) Frontend source code
+│   │── assets/           # UI images and assets (like hero banner)
+│   │── components/       # Reusable React UI components
+│   │── context/          # React Context providers (Auth Context)
+│   │── data/             # Fallback mock data structures
+│   │── pages/            # Page layouts (Login, Student and Admin interfaces)
+│   │── services/         # API service client logic (api.js)
+│   └── main.jsx          # React app entry point
+│── package.json          # Vite configuration and frontend dependencies
+└── README.md             # Project documentation
+```
 
 ---
 
-## 🌐 Deployment
+## 🎥 Demo Video
 
-Since this is a Single Page Application (SPA) utilizing React Router, redirect configurations have been pre-configured:
-
-### Deploying to Vercel
-1. Install Vercel CLI (`npm i -g vercel`) or connect your GitHub repository to Vercel.
-2. Build Settings are automatically detected:
-   - **Build Command**: `npm run build`
-   - **Output Directory**: `dist`
-3. Single Page Application routing redirects are handled via the configured [vercel.json](file:///d:/Dbms%20project%20by%20gemini/vercel.json).
-
-### Deploying to Netlify
-1. Connect your repository to Netlify.
-2. Configure build settings:
-   - **Build Command**: `npm run build`
-   - **Publish Directory**: `dist`
-3. SPA routing is managed via the configured [netlify.toml](file:///d:/Dbms%20project%20by%20gemini/netlify.toml).
-
+👉 [Watch Project Demo](#) *(Add your video link here)*
